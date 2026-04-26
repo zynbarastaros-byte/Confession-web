@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Confession Box</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0c0c14;
+    --surface: #13131f;
+    --border: #2a2a40;
+    --accent: #c084fc;
+    --text: #e2e2f0;
+    --muted: #6b6b8a;
+    --success: #34d399;
+    --danger: #f87171;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, #ffffff22 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 60%, #ffffff18 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 10%, #ffffff20 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 80%, #ffffff15 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 40%, #ffffff20 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 90%, #ffffff12 0%, transparent 100%),
+      radial-gradient(2px 2px at 60% 30%, #c084fc22 0%, transparent 100%),
+      radial-gradient(2px 2px at 15% 70%, #818cf822 0%, transparent 100%);
+    pointer-events: none;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(192,132,252,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 560px;
+    padding: 2rem 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+  .header-tag {
+    font-size: 0.68rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.9rem;
+    opacity: 0.8;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 8vw, 3.6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #e9d5ff, #c084fc, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.8rem;
+  }
+  .header p {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .card {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.7s 0.25s ease both;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(192,132,252,0.5), transparent);
+  }
+
+  .field { margin-bottom: 1.4rem; }
+  .field-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+    display: block;
+  }
+
+  input[type="email"], textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    line-height: 1.7;
+    padding: 0.85rem 1.2rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="email"]::placeholder, textarea::placeholder { color: var(--muted); }
+  input[type="email"]:focus, textarea:focus {
+    border-color: rgba(192,132,252,0.5);
+    box-shadow: 0 0 0 3px rgba(192,132,252,0.08);
+  }
+  textarea { resize: none; min-height: 180px; }
+
+  .char-count {
+    text-align: right;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+  }
+  .char-count.warn { color: var(--danger); }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0.4rem 0 1.4rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .btn-send {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #c084fc, #818cf8);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(192,132,252,0.25);
+    margin-top: 0.5rem;
+  }
+  .btn-send:hover:not(:disabled) {
+    opacity: 0.92;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(192,132,252,0.35);
+  }
+  .btn-send:active:not(:disabled) { transform: scale(0.98); }
+  .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    border-radius: 12px;
+    padding: 1rem 1.6rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s;
+    opacity: 0;
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { background: #0d2b22; border: 1px solid rgba(52,211,153,0.3); color: var(--success); }
+  .toast.error { background: #2b0d0d; border: 1px solid rgba(248,113,113,0.3); color: var(--danger); }
+
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 1.5rem 0.5rem;
+    animation: fadeUp 0.5s ease both;
+  }
+  .success-screen.show { display: block; }
+  .success-icon {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, rgba(192,132,252,0.2), rgba(129,140,248,0.2));
+    border: 1px solid rgba(192,132,252,0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1.4rem;
+  }
+  .success-screen h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, #e9d5ff, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.7rem;
+  }
+  .success-screen p { color: var(--muted); font-size: 0.88rem; line-height: 1.7; }
+  .btn-another {
+    margin-top: 1.8rem;
+    padding: 0.75rem 2rem;
+    border: 1px solid rgba(192,132,252,0.35);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-another:hover { background: rgba(192,132,252,0.08); transform: translateY(-1px); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <p class="header-tag">anonymous · safe · private</p>
+    <h1>Confession Box</h1>
+    <p>Share what's on your heart. Your confession is sent privately and no one else will ever see it.</p>
+  </div>
+
+  <div class="card" id="formCard">
+    <div id="formContent">
+
+      <div class="field">
+        <label class="field-label" for="emailInput">📧 Your Email</label>
+        <input type="email" id="emailInput" placeholder="yourname@email.com" maxlength="254"/>
+      </div>
+
+      <div class="divider">your confession</div>
+
+      <div class="field">
+        <label class="field-label" for="confessionInput">💬 Confession</label>
+        <textarea id="confessionInput" placeholder="Type your confession here..." maxlength="2000"></textarea>
+        <div class="char-count" id="charCount">0 / 2000</div>
+      </div>
+
+      <button class="btn-send" id="sendBtn" onclick="sendConfession()">
+        <span id="btnText">Send Confession 💌</span>
+      </button>
+
+    </div>
+
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">✨</div>
+      <h2>Confession Sent!</h2>
+      <p>Your confession has been delivered. Thank you for trusting this space. 💜</p>
+      <button class="btn-another" onclick="resetForm()">Send Another</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const WEBHOOK = "https://discord.com/api/webhooks/1497976579840802908/FLs21b9hTnoPV6SFJSA7nx1-B5j8Cer5YIRZ_5OWcGEQTF7Sg9CMxDI49Lazv2bDrDwo";
+
+  document.getElementById('confessionInput').addEventListener('input', function() {
+    const len = this.value.length;
+    const el = document.getElementById('charCount');
+    el.textContent = len + ' / 2000';
+    el.className = 'char-count' + (len > 1800 ? ' warn' : '');
+  });
+
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => { t.className = 'toast ' + type; }, 3500);
+  }
+
+  async function sendConfession() {
+    const email = document.getElementById('emailInput').value.trim();
+    const confession = document.getElementById('confessionInput').value.trim();
+    const btn = document.getElementById('sendBtn');
+    const btnText = document.getElementById('btnText');
+
+    if (!email) { showToast('⚠️ Please enter your email.', 'error'); return; }
+    if (!email.includes('@') || !email.includes('.')) { showToast('⚠️ Please enter a valid email.', 'error'); return; }
+    if (!confession) { showToast('⚠️ Please write your confession.', 'error'); return; }
+    if (confession.length < 5) { showToast('⚠️ Confession is too short.', 'error'); return; }
+
+    btn.disabled = true;
+    btnText.innerHTML = '<span class="spinner"></span>Sending...';
+
+    const now = new Date();
+    const timestamp = now.toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' });
+
+    const payload = {
+      embeds: [{
+        title: "💌 New Confession",
+        color: 0xc084fc,
+        fields: [
+          { name: "📧 Email", value: "`" + email + "`", inline: false },
+          { name: "💬 Confession", value: confession.length > 1024 ? confession.substring(0, 1021) + '...' : confession, inline: false }
+        ],
+        footer: { text: "📅 " + timestamp + " • Confession Box" }
+      }]
+    };
+
+    try {
+      const res = await fetch(WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok || res.status === 204) {
+        document.getElementById('formContent').style.display = 'none';
+        document.getElementById('successScreen').classList.add('show');
+      } else {
+        showToast('❌ Failed to send. Try again.', 'error');
+        btn.disabled = false;
+        btnText.innerHTML = 'Send Confession 💌';
+      }
+    } catch (err) {
+      showToast('❌ Network error. Check your connection.', 'error');
+      btn.disabled = false;
+      btnText.innerHTML = 'Send Confession 💌';
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('emailInput').value = '';
+    document.getElementById('confessionInput').value = '';
+    document.getElementById('charCount').textContent = '0 / 2000';
+    document.getElementById('charCount').className = 'char-count';
+    document.getElementById('formContent').style.display = '';
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('btnText').innerHTML = 'Send Confession 💌';
+    document.getElementById('successScreen').classList.remove('show');
+  }
+</script>
+</body>
+</html>
